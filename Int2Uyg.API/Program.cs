@@ -1,5 +1,7 @@
-
+using Microsoft.EntityFrameworkCore;
+using Int2Uyg.API.Models;
 using Int2Uyg.API.Repositories;
+
 
 namespace Int2Uyg.API
 {
@@ -16,6 +18,8 @@ namespace Int2Uyg.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddScoped<ProductRepository>();
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon")));
 
             var app = builder.Build();
 
