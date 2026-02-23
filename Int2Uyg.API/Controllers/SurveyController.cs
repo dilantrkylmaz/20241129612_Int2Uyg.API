@@ -1,0 +1,67 @@
+﻿using AutoMapper;
+using Int2Uyg.API.DTOs;
+using Int2Uyg.API.Models;
+using Int2Uyg.API.Repositories;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Int2Uyg.API.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SurveyController : ControllerBase
+    {
+        private readonly SurveyRepository _surveyRepository;
+        private readonly IMapper _mapper;
+        ResultDto _result = new ResultDto();
+
+        public SurveyController(SurveyRepository surveyRepository, IMapper mapper)
+        {
+            _surveyRepository = surveyRepository;
+            _mapper = mapper;
+        }
+
+        [HttpGet]
+        public async Task<List<SurveyDto>> List()
+        {
+            var surveys = await _surveyRepository.GetAllAsync();
+            return _mapper.Map<List<SurveyDto>>(surveys);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<SurveyDto> GetById(int id)
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            return _mapper.Map<SurveyDto>(survey);
+        }
+
+        [HttpPost]
+        public async Task<ResultDto> Add(SurveyDto dto)
+        {
+            var survey = _mapper.Map<Survey>(dto);
+            await _surveyRepository.AddAsync(survey);
+            _result.Status = true;
+            _result.Message = "Anket Eklendi";
+            return _result;
+        }
+
+        [HttpPut]
+        public async Task<ResultDto> Update(SurveyDto dto)
+        {
+            var survey = _mapper.Map<Survey>(dto);
+            await _surveyRepository.UpdateAsync(survey);
+            _result.Status = true;
+            _result.Message = "Anket Güncellendi";
+            return _result;
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ResultDto> Delete(int id)
+        {
+            await _surveyRepository.DeleteAsync(id);
+            _result.Status = true;
+            _result.Message = "Anket Silindi";
+            return _result;
+        }
+    }
+}

@@ -16,7 +16,8 @@ namespace Int2Uyg.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<ProductRepository>();
+            builder.Services.AddScoped<CategoryRepository>();
+            builder.Services.AddScoped<SurveyRepository>();
             builder.Services.AddAutoMapper(c => { }, Assembly.GetExecutingAssembly());
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon")));
