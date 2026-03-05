@@ -19,12 +19,19 @@ namespace Int2Uyg.API
             builder.Services.AddScoped<CategoryRepository>();
             builder.Services.AddScoped<SurveyRepository>();
             builder.Services.AddAutoMapper(c => { }, Assembly.GetExecutingAssembly());
+ 
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                {
+                    builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                });
+            });
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon")));
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -32,6 +39,8 @@ namespace Int2Uyg.API
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors();
 
             app.UseAuthorization();
 

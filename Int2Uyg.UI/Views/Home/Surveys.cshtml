@@ -1,0 +1,84 @@
+﻿@{
+    ViewData["Title"] = "Kategori Anketleri";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800" id="categoryTitle">Yükleniyor...</h1>
+
+    <a asp-controller="Home" asp-action="Categories" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kategorilere Dön
+    </a>
+</div>
+
+<div class="row" id="surveyList">
+    <div class="col-12 text-center mt-5" id="loader">
+        <div class="spinner-border text-info" role="status"></div>
+        <p class="mt-2">Bu kategoriye ait anketler getiriliyor...</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var ApiBaseUrl = "@ViewBag.ApiBaseUrl";
+            var catId = "@ViewBag.CatId"; 
+            $.ajax({
+                url: ApiBaseUrl + "api/Category/" + catId,
+                method: "GET",
+                success: function (data) {
+                    $("#categoryTitle").text(data.name + " Listesi");
+                }
+            });
+
+            $.ajax({
+                url: ApiBaseUrl + "api/Survey",
+                method: "GET",
+                success: function (data) {
+                    $("#loader").hide();
+                    var htmlTemplate = "";
+
+                    $.each(data, function (index, item) {
+
+                        if (item.categoryId == catId) {
+                            htmlTemplate += `
+                                <div class="col-xl-6 col-md-6 mb-4">
+                                    <div class="card border-left-info shadow h-100 py-2">
+                                        <div class="card-body">
+                                            <div class="row no-gutters align-items-center">
+                                                <div class="col mr-2">
+                                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Anket Formu</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${item.title}</div>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-white border-0 text-center">
+                                            <a href="#" class="btn btn-info btn-sm btn-icon-split mb-1">
+                                                <span class="icon text-white-50"><i class="fas fa-eye"></i></span>
+                                                <span class="text">Soruları Gör</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    if(htmlTemplate === "") {
+                        htmlTemplate = '<div class="col-12"><div class="alert alert-info shadow-sm"><i class="fas fa-info-circle"></i> Bu kategoriye ait henüz bir anket oluşturulmamış.</div></div>';
+                    }
+
+                    $("#surveyList").append(htmlTemplate);
+                },
+                error: function () {
+                    $("#loader").hide();
+                    $("#surveyList").html('<div class="col-12 text-center text-danger"><b>Hata:</b> Anketler çekilemedi.</div>');
+                }
+            });
+
+        });
+    </script>
+}
