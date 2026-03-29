@@ -1,34 +1,47 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using Int2Uyg.API.DTOs;
 using Int2Uyg.API.Models;
 using Int2Uyg.API.Repositories;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Int2Uyg.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize] 
     public class CategoryController : ControllerBase
     {
         private readonly CategoryRepository _categoryRepository;
+        private readonly SurveyRepository _surveyRepository;
         private readonly IMapper _mapper;
         ResultDto _result = new ResultDto();
 
-        public CategoryController(CategoryRepository categoryRepository, IMapper mapper)
+        public CategoryController(CategoryRepository categoryRepository, SurveyRepository surveyRepository, IMapper mapper)
         {
             _categoryRepository = categoryRepository;
+            _surveyRepository = surveyRepository;
             _mapper = mapper;
         }
 
-
         [HttpGet]
+        [AllowAnonymous]
         public async Task<List<CategoryDto>> List()
         {
             var categories = await _categoryRepository.GetAllAsync();
+
             var sortedCategories = categories.OrderByDescending(c => c.Id).ToList();
 
-            return _mapper.Map<List<CategoryDto>>(sortedCategories);
+            var categoryDtos = _mapper.Map<List<CategoryDto>>(sortedCategories);
+
+            foreach (var cat in categoryDtos)
+            {
+                cat.SurveyCount = await _surveyRepository.Where(s => s.CategoryId == cat.Id).CountAsync();
+            }
+
+            return categoryDtos;
         }
 
         [HttpGet("{id}")]
@@ -38,9 +51,29 @@ namespace Int2Uyg.API.Controllers
             return _mapper.Map<CategoryDto>(category);
         }
 
+        [HttpGet("{id}/Surveys")]
+        public async Task<List<SurveyDto>> SurveyList(int id)
+        {
 
+            var surveysQuery = _surveyRepository.Where(s => s.CategoryId == id)
+                                                .Include(i => i.Category)
+                                                .Include(i => i.User);
+
+            var surveys = await surveysQuery.ToListAsync();
+
+            var surveyDtos = _mapper.Map<List<SurveyDto>>(surveys);
+
+            if (User.Identity != null && User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+            {
+                var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                surveyDtos = surveyDtos.Where(s => s.UserId == userId).ToList();
+            }
+
+            return surveyDtos;
+        }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Add(CategoryDto dto)
         {
             var categories = await _categoryRepository.GetAllAsync();
@@ -60,9 +93,8 @@ namespace Int2Uyg.API.Controllers
             return _result;
         }
 
-
-
         [HttpPut]
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Update(CategoryDto dto)
         {
             var categories = await _categoryRepository.GetAllAsync();
@@ -83,18 +115,31 @@ namespace Int2Uyg.API.Controllers
                 orjinalKategori.IsActive = dto.IsActive;
 
                 await _categoryRepository.UpdateAsync(orjinalKategori);
+                _result.Status = true;
+                _result.Message = "Kategori başarıyla güncellendi.";
+            }
+            else
+            {
+                _result.Status = false;
+                _result.Message = "Kategori bulunamadı!";
             }
 
-            _result.Status = true;
-            _result.Message = "Kategori başarıyla güncellendi.";
             return _result;
         }
 
-
-
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Delete(int id)
         {
+            var hasSurveys = await _surveyRepository.Where(s => s.CategoryId == id).AnyAsync();
+
+            if (hasSurveys)
+            {
+                _result.Status = false;
+                _result.Message = "Üzerinde Anket Kaydı Olan Kategori Silinemez! Lütfen önce içindeki anketleri silin.";
+                return _result;
+            }
+
             await _categoryRepository.DeleteAsync(id);
             _result.Status = true;
             _result.Message = "Kategori Silindi";

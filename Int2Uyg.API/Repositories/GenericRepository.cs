@@ -1,5 +1,6 @@
 ﻿using Int2Uyg.API.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Int2Uyg.API.Repositories
 {
@@ -18,9 +19,15 @@ namespace Int2Uyg.API.Repositories
         {
             return await _dbSet.ToListAsync();
         }
+
         public async Task<T> GetByIdAsync(int id)
         {
             return await _dbSet.FindAsync(id);
+        }
+
+        public IQueryable<T> Where(Expression<Func<T, bool>> predicate)
+        {
+            return _dbSet.Where(predicate);
         }
 
         public async Task AddAsync(T entity)

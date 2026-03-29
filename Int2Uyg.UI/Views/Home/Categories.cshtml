@@ -57,13 +57,13 @@
 
 @section Scripts {
 	<script>
-			   $(document).ready(function () {
-			var apiBaseUrl = "https://localhost:7258/";
+		$(document).ready(function () {
+			var apiBaseUrl = "https://localhost:7258/"; 
 
 			function KategoriListele() {
 				$("#loader").show();
 				$.ajax({
-					url: apiBaseUrl + "api/Category",
+					url: apiBaseUrl + "api/Category/List", 
 					type: "GET",
 					success: function (data) {
 						$("#loader").hide();
@@ -71,50 +71,48 @@
 					},
 					error: function () {
 						$("#loader").hide();
-						$("#categoryCards").html('<div class="alert alert-danger w-100 text-center">API Bağlantı Hatası!</div>');
+						$("#categoryCards").html('<div class="alert alert-danger w-100 text-center">API Bağlantı Hatası! Motor çalışmıyor veya adres yanlış.</div>');
 					}
 				});
 			}
 
+			function KartlariOlustur(data) {
+				$("#categoryCards").empty();
+				var html = "";
 
-				function KartlariOlustur(data) {
-			$("#categoryCards").empty();
-			var html = "";
+				$.each(data, function (index, item) {
+					var isActive = item.isActive !== undefined ? item.isActive : item.IsActive;
+					var name = item.name || item.Name;
+					var id = item.id || item.Id;
 
-			$.each(data, function (index, item) {
-				var isActive = item.isActive !== undefined ? item.isActive : item.IsActive;
-				var name = item.name || item.Name;
-				var id = item.id || item.Id;
-
-				var durumBadge = isActive === true ? '<span class="badge badge-success px-2 py-1">Aktif</span>' : '<span class="badge badge-danger px-2 py-1">Pasif</span>';
-				html += `
-					<div class="col-xl-4 col-md-6 mb-4">
-						<div class="card border-left-primary shadow h-100 py-2">
-							<div class="card-body">
-								<div class="row no-gutters align-items-center">
-									<div class="col mr-2">
-										<div class="text-xs font-weight-bold text-primary mb-1">DURUM: ${durumBadge}</div>
-										<div class="h5 mb-0 font-weight-bold text-gray-800">${name}</div>
+					var durumBadge = isActive === true ? '<span class="badge badge-success px-2 py-1">Aktif</span>' : '<span class="badge badge-danger px-2 py-1">Pasif</span>';
+					html += `
+						<div class="col-xl-4 col-md-6 mb-4">
+							<div class="card border-left-primary shadow h-100 py-2">
+								<div class="card-body">
+									<div class="row no-gutters align-items-center">
+										<div class="col mr-2">
+											<div class="text-xs font-weight-bold text-primary mb-1">DURUM: ${durumBadge}</div>
+											<div class="h5 mb-0 font-weight-bold text-gray-800">${name}</div>
+										</div>
+										<div class="col-auto"><i class="fas fa-folder fa-2x text-gray-300"></i></div>
 									</div>
-									<div class="col-auto"><i class="fas fa-folder fa-2x text-gray-300"></i></div>
+								</div>
+								<div class="card-footer bg-white border-0 text-center pt-0">
+									<hr class="mt-0 mb-2">
+									<a href="/Survey/Index/${id}" class="btn btn-info btn-sm" title="Bu Kategorinin Anketlerini Gör">
+										<i class="fas fa-list"></i>
+									</a>
+									<button class="btn btn-warning btn-sm btnDuzenleModal" data-id="${id}" title="Düzenle"><i class="fas fa-edit"></i></button>
+									<button class="btn btn-danger btn-sm btnSil" data-id="${id}" title="Sil"><i class="fas fa-trash"></i></button>
 								</div>
 							</div>
-							<div class="card-footer bg-white border-0 text-center pt-0">
-								<hr class="mt-0 mb-2">
-								<a href="/Survey/Index/${id}" class="btn btn-info btn-sm" title="Bu Kategorinin Anketlerini Gör">
-									<i class="fas fa-list"></i>
-								</a>
-								<button class="btn btn-warning btn-sm btnDuzenleModal" data-id="${id}" title="Düzenle"><i class="fas fa-edit"></i></button>
-								<button class="btn btn-danger btn-sm btnSil" data-id="${id}" title="Sil"><i class="fas fa-trash"></i></button>
-							</div>
-						</div>
-					</div>`;
-			});
-			$("#categoryCards").html(html);
-		}
+						</div>`;
+				});
+				$("#categoryCards").html(html);
+			}
 
 			KategoriListele();
-
 
 			$(document).on("click", "#btnYeniEkle", function(){
 				$("#divTitle").html("Yeni Kategori Ekle");
@@ -128,7 +126,6 @@
 				$("#divResult").hide();
 			});
 
-
 			$(document).on("click", "#btnSave", function(){
 				var kategoriAdi = $("#txtName").val().trim();
 				var aciklama = $("#txtDescription").val().trim();
@@ -139,7 +136,6 @@
 				}
 				if(aciklama === "") aciklama = "-";
 
-
 				var category = {
 					id: 0,
 					name: kategoriAdi,
@@ -148,7 +144,7 @@
 				};
 
 				$.ajax({
-					url: apiBaseUrl + "api/Category",
+					url: apiBaseUrl + "api/Category/Add", 
 					type: "POST",
 					contentType: "application/json",
 					data: JSON.stringify(category),
@@ -172,7 +168,7 @@
 				var id = $(this).attr("data-id");
 
 				$.ajax({
-					url: apiBaseUrl + "api/Category/" + id,
+					url: apiBaseUrl + "api/Category/GetById/" + id, 
 					type: "GET",
 					success: function (d) {
 						$("#divTitle").html("Kategori Düzenle");
@@ -192,7 +188,6 @@
 				});
 			});
 
-
 			$(document).on("click", "#btnEdit", function(){
 				var kategoriAdi = $("#txtName").val().trim();
 				var aciklama = $("#txtDescription").val().trim();
@@ -204,7 +199,6 @@
 				}
 				if(aciklama === "") aciklama = "-";
 
-
 				var category = {
 					id: idDegeri,
 					name: kategoriAdi,
@@ -213,7 +207,7 @@
 				};
 
 				$.ajax({
-					url: apiBaseUrl + "api/Category",
+					url: apiBaseUrl + "api/Category/Update", 
 					type: "PUT",
 					contentType: "application/json",
 					data: JSON.stringify(category),
@@ -233,14 +227,12 @@
 				});
 			});
 
-
-
 			$(document).on("click", ".btnSil", function(){
 				var id = $(this).attr("data-id");
 
 				if(confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) {
 					$.ajax({
-						url: apiBaseUrl + "api/Category/" + id,
+						url: apiBaseUrl + "api/Category/Delete/" + id, 
 						type: "DELETE",
 						success: function (d) {
 							if (d.status){

@@ -21,18 +21,21 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            var ApiBaseUrl = "@ViewBag.ApiBaseUrl";
-            var catId = "@ViewBag.CatId"; 
+
+            var ApiBaseUrl = "https://localhost:7258/"; 
+            var catId = "@ViewBag.CatId";
+
             $.ajax({
-                url: ApiBaseUrl + "api/Category/" + catId,
+                url: ApiBaseUrl + "api/Category/GetById/" + catId, 
                 method: "GET",
                 success: function (data) {
-                    $("#categoryTitle").text(data.name + " Listesi");
+                    var name = data.name || data.Name;
+                    $("#categoryTitle").text(name + " Listesi");
                 }
             });
 
             $.ajax({
-                url: ApiBaseUrl + "api/Survey",
+                url: ApiBaseUrl + "api/Survey/List", 
                 method: "GET",
                 success: function (data) {
                     $("#loader").hide();
@@ -40,7 +43,10 @@
 
                     $.each(data, function (index, item) {
 
-                        if (item.categoryId == catId) {
+                        var itemCatId = item.categoryId || item.CategoryId;
+                        var itemTitle = item.title || item.Title;
+
+                        if (itemCatId == catId) {
                             htmlTemplate += `
                                 <div class="col-xl-6 col-md-6 mb-4">
                                     <div class="card border-left-info shadow h-100 py-2">
@@ -48,7 +54,7 @@
                                             <div class="row no-gutters align-items-center">
                                                 <div class="col mr-2">
                                                     <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Anket Formu</div>
-                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${item.title}</div>
+                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${itemTitle}</div>
                                                 </div>
                                                 <div class="col-auto">
                                                     <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
@@ -71,11 +77,11 @@
                         htmlTemplate = '<div class="col-12"><div class="alert alert-info shadow-sm"><i class="fas fa-info-circle"></i> Bu kategoriye ait henüz bir anket oluşturulmamış.</div></div>';
                     }
 
-                    $("#surveyList").append(htmlTemplate);
+                    $("#surveyList").html(htmlTemplate); 
                 },
                 error: function () {
                     $("#loader").hide();
-                    $("#surveyList").html('<div class="col-12 text-center text-danger"><b>Hata:</b> Anketler çekilemedi.</div>');
+                    $("#surveyList").html('<div class="col-12 text-center text-danger"><b>Hata:</b> Anketler çekilemedi. API adresini veya bağlantısını kontrol edin.</div>');
                 }
             });
 

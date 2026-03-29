@@ -2,13 +2,15 @@
 using Int2Uyg.API.DTOs;
 using Int2Uyg.API.Models;
 using Int2Uyg.API.Repositories;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Int2Uyg.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class SurveyController : ControllerBase
     {
         private readonly SurveyRepository _surveyRepository;
@@ -36,8 +38,18 @@ namespace Int2Uyg.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Add(SurveyDto dto)
         {
+            bool isExist = await _surveyRepository.Where(s => s.Title == dto.Title).AnyAsync();
+
+            if (isExist)
+            {
+                _result.Status = false;
+                _result.Message = "Bu başlıkta bir anket zaten var!";
+                return _result;
+            }
+
             var survey = _mapper.Map<Survey>(dto);
             await _surveyRepository.AddAsync(survey);
             _result.Status = true;
@@ -46,6 +58,7 @@ namespace Int2Uyg.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Update(SurveyDto dto)
         {
             var survey = _mapper.Map<Survey>(dto);
@@ -56,6 +69,7 @@ namespace Int2Uyg.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ResultDto> Delete(int id)
         {
             await _surveyRepository.DeleteAsync(id);
