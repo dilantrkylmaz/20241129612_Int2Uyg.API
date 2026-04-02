@@ -12,6 +12,8 @@ namespace Uyg.API.Mapping
             CreateMap<Survey, SurveyDto>().ReverseMap();
             CreateMap<Question, QuestionDto>().ReverseMap();
             CreateMap<AppUser, UserDto>().ReverseMap();
+            CreateMap<Answer, AnswerDto>().ReverseMap();
+            CreateMap<QuestionOption, QuestionOptionDto>().ReverseMap();
         }
     }
 }
