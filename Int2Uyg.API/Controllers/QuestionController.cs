@@ -22,6 +22,14 @@ namespace Int2Uyg.API.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet]
+        public async Task<List<QuestionDto>> List()
+        {
+            var questions = await _questionRepository.GetAllAsync();
+            return _mapper.Map<List<QuestionDto>>(questions);
+        }
+
+
         [HttpGet("{surveyId}")]
         public async Task<List<QuestionDto>> GetQuestionsBySurveyId(int surveyId)
         {

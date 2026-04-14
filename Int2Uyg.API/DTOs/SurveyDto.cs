@@ -7,6 +7,7 @@
         public string Description { get; set; }
         public string PhotoUrl { get; set; }
         public int CategoryId { get; set; }
+        public string? CategoryName { get; set; } 
         public string UserId { get; set; }
         public bool IsActive { get; set; }
     }

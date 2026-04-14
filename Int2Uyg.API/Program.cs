@@ -68,6 +68,7 @@ namespace Int2Uyg.API
             .AddEntityFrameworkStores<AppDbContext>();
 
 
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -87,12 +88,15 @@ namespace Int2Uyg.API
                 };
             });
 
+
+
             builder.Services.AddScoped(typeof(GenericRepository<>));
             builder.Services.AddScoped<CategoryRepository>();
             builder.Services.AddScoped<SurveyRepository>();
             builder.Services.AddScoped<AnswerRepository>();
             builder.Services.AddScoped<QuestionRepository>();
             builder.Services.AddScoped<QuestionOptionRepository>();
+
 
 
             builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());

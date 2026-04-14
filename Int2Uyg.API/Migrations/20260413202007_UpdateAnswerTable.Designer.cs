@@ -4,6 +4,7 @@ using Int2Uyg.API.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Int2Uyg.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260413202007_UpdateAnswerTable")]
+    partial class UpdateAnswerTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -34,9 +37,6 @@ namespace Int2Uyg.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<int>("QuestionId")
@@ -188,9 +188,6 @@ namespace Int2Uyg.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -215,9 +212,6 @@ namespace Int2Uyg.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<int>("SurveyId")
@@ -249,9 +243,6 @@ namespace Int2Uyg.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("OptionText")
@@ -290,9 +281,6 @@ namespace Int2Uyg.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("PhotoUrl")
@@ -472,7 +460,7 @@ namespace Int2Uyg.API.Migrations
             modelBuilder.Entity("Int2Uyg.API.Models.QuestionOption", b =>
                 {
                     b.HasOne("Int2Uyg.API.Models.Question", "Question")
-                        .WithMany("QuestionOptions")
+                        .WithMany()
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -553,11 +541,6 @@ namespace Int2Uyg.API.Migrations
             modelBuilder.Entity("Int2Uyg.API.Models.Category", b =>
                 {
                     b.Navigation("Surveys");
-                });
-
-            modelBuilder.Entity("Int2Uyg.API.Models.Question", b =>
-                {
-                    b.Navigation("QuestionOptions");
                 });
 
             modelBuilder.Entity("Int2Uyg.API.Models.Survey", b =>

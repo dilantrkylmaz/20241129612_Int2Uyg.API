@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace Int2Uyg.API.Repositories
 {
-    public class GenericRepository<T> where T : class
+    public class GenericRepository<T> where T : BaseEntity
     {
         protected readonly AppDbContext _context;
         private readonly DbSet<T> _dbSet;
@@ -15,9 +15,9 @@ namespace Int2Uyg.API.Repositories
             _dbSet = _context.Set<T>();
         }
 
-        public async Task<List<T>> GetAllAsync()
+        public virtual async Task<List<T>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.Where(x => !x.IsDeleted).ToListAsync();
         }
 
         public async Task<T> GetByIdAsync(int id)
@@ -30,7 +30,7 @@ namespace Int2Uyg.API.Repositories
             return _dbSet.Where(predicate);
         }
 
-        public async Task AddAsync(T entity)
+        public virtual async Task AddAsync(T entity)
         {
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
@@ -42,12 +42,13 @@ namespace Int2Uyg.API.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public virtual async Task DeleteAsync(int id)
         {
             var entity = await _dbSet.FindAsync(id);
             if (entity != null)
             {
-                _dbSet.Remove(entity);
+                entity.IsDeleted = true;
+                _dbSet.Update(entity);
                 await _context.SaveChangesAsync();
             }
         }

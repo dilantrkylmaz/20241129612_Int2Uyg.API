@@ -3,8 +3,8 @@
     public class Question : BaseEntity
     {
         public string Text { get; set; } 
-
         public int SurveyId { get; set; }
         public Survey? Survey { get; set; }
+        public List<QuestionOption> QuestionOptions { get; set; } = new List<QuestionOption>();
     }
 }

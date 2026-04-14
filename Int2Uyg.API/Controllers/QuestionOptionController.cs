@@ -9,7 +9,7 @@ namespace Int2Uyg.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize] // Sadece üyeler şık ekleyip silebilir
+    [Authorize] 
     public class QuestionOptionController : ControllerBase
     {
         private readonly QuestionOptionRepository _optionRepository;
@@ -22,7 +22,7 @@ namespace Int2Uyg.API.Controllers
             _mapper = mapper;
         }
 
-        // Bir soruya ait tüm şıkları getirir
+
         [HttpGet("{questionId}")]
         public async Task<List<QuestionOptionDto>> GetOptionsByQuestionId(int questionId)
         {

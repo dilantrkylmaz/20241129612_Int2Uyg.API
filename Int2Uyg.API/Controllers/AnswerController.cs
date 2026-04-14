@@ -22,7 +22,6 @@ namespace Int2Uyg.API.Controllers
             _mapper = mapper;
         }
 
-        // Bir sorunun cevaplarını listeler
         [HttpGet("{questionId}")]
         public async Task<List<AnswerDto>> GetAnswersByQuestion(int questionId)
         {
@@ -31,7 +30,14 @@ namespace Int2Uyg.API.Controllers
             return _mapper.Map<List<AnswerDto>>(filteredAnswers);
         }
 
-        // Soruya yeni cevap ekler (Her üye cevap verebilir)
+        [HttpGet("{surveyId}")]
+        public async Task<List<AnswerDto>> GetAnswersBySurvey(int surveyId)
+        {
+            var answers = await _answerRepository.GetAllAsync();
+            var filteredAnswers = answers.Where(a => a.SurveyId == surveyId).ToList();
+            return _mapper.Map<List<AnswerDto>>(filteredAnswers);
+        }
+
         [HttpPost]
         public async Task<ResultDto> Add(AnswerDto dto)
         {
@@ -42,7 +48,6 @@ namespace Int2Uyg.API.Controllers
             return _result;
         }
 
-        // Kötü/Spam cevabı siler (Sadece Admin silebilir)
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<ResultDto> Delete(int id)

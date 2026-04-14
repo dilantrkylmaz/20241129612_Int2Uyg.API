@@ -9,7 +9,9 @@ namespace Uyg.API.Mapping
         public MapProfile()
         {
             CreateMap<Category, CategoryDto>().ReverseMap();
-            CreateMap<Survey, SurveyDto>().ReverseMap();
+            CreateMap<Survey, SurveyDto>()
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
+                .ReverseMap();
             CreateMap<Question, QuestionDto>().ReverseMap();
             CreateMap<AppUser, UserDto>().ReverseMap();
             CreateMap<Answer, AnswerDto>().ReverseMap();
