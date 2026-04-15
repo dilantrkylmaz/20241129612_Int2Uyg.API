@@ -1,2 +1,85 @@
-﻿ <!-- Page Heading -->
-<h1 class="h3 mb-4 text-gray-800">Yönetici Sayfası</h1>
+﻿@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800 font-weight-bold">
+            <i class="fas fa-hand-sparkles text-warning mr-2"></i>
+            Hoş geldin, <span id="welcomeUserName" class="text-primary">...</span>!
+        </h1>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Anket Sayısı</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalSurveys">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-poll fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Kategoriler</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCategories">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Sistem Durumu</h6>
+                </div>
+                <div class="card-body text-center py-5">
+                    <img src="~/sbadmin/img/undraw_posting_photo.svg" style="width: 250px;" class="mb-4">
+                    <h5>Anket Portalı Yönetim Paneline Başarıyla Giriş Yaptınız.</h5>
+                    <p class="text-muted">Sol taraftaki menüyü kullanarak anketleri yönetebilir veya yeni kategoriler ekleyebilirsiniz.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toTitleCase(str) {
+            if(!str) return "";
+            return str.split(' ').map(function(word) {
+                return word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR');
+            }).join(' ');
+        }
+
+        $(document).ready(function () {
+            var token = localStorage.getItem("token");
+            if (token) {
+                if (typeof parseJwt === "function") {
+                    var payload = parseJwt(token);
+                    if (payload) {
+                        var rawName = payload["FullName"] || payload["unique_name"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Kullanıcı";
+                        $("#welcomeUserName").text(toTitleCase(rawName));
+                    }
+                }
+            }
+        });
+    </script>
+}

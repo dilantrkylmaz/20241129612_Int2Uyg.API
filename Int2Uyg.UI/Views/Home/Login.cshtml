@@ -1,0 +1,159 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Anket Portalı | Giriş Yap</title>
+
+    <link href="~/sbadmin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="~/sbadmin/css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+        /* Tam Projene Uygun Veri Analizi ve Anket Konseptli Yüksek Kalite Görsel */
+        .bg-login-image-survey {
+            background: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-primary">
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-12 col-md-9">
+                <div class="card o-hidden border-0 shadow-lg my-5">
+                    <div class="card-body p-0">
+                        <div class="row">
+                            <div class="col-lg-6 d-none d-lg-block bg-login-image-survey"></div>
+                            <div class="col-lg-6">
+                                <div class="p-5">
+                                    <div class="text-center">
+                                        <h1 class="h4 text-gray-900 mb-4 font-weight-bold">Anket Portalı'na Hoş Geldiniz!</h1>
+                                        <p class="mb-4">Yönetim paneline erişmek için lütfen giriş yapın.</p>
+                                    </div>
+
+                                    <form class="user">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control form-control-user"
+                                                   id="txtUserName" placeholder="Kullanıcı Adı">
+                                        </div>
+
+                                        <div class="form-group" style="position: relative;">
+                                            <input type="password" class="form-control form-control-user"
+                                                   id="txtPassword" placeholder="Parola" style="padding-right: 45px;">
+                                            <i class="fas fa-eye" id="togglePassword"
+                                               style="position: absolute; right: 18px; top: 16px; cursor: pointer; color: #b7b9cc;"></i>
+                                        </div>
+
+                                        <button type="button" id="btnLogin" class="btn btn-primary btn-user btn-block font-weight-bold">
+                                            Giriş Yap
+                                        </button>
+                                    </form>
+
+                                    <hr>
+
+                                    <div class="text-center mt-3">
+                                        <a class="small font-weight-bold" href="/ForgotPassword" style="color: #e74a3b;">
+                                            <i class="fas fa-key"></i> Şifremi Unuttum
+                                        </a>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <a class="small font-weight-bold" href="/Register" style="color: #4e73df;">
+                                            <i class="fas fa-user-plus"></i> Hesabınız yok mu? Yeni Üye Kaydı Oluşturun!
+                                        </a>
+                                    </div>
+
+                                    <div id="divResult" style="display:none;"></div>
+
+                                    <div class="text-center mt-4">
+                                        <small class="text-muted">Anket Portalı &copy; @DateTime.Now.Year</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/sbadmin/vendor/jquery/jquery.min.js"></script>
+    <script src="~/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/sbadmin/js/sb-admin-2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+
+            // Göz İkonu (Şifre Göster/Gizle) Mantığı
+            $("#togglePassword").click(function () {
+                var passwordInput = $("#txtPassword");
+                var icon = $(this);
+
+                if (passwordInput.attr("type") === "password") {
+                    passwordInput.attr("type", "text");
+                    icon.removeClass("fa-eye").addClass("fa-eye-slash");
+                } else {
+                    passwordInput.attr("type", "password");
+                    icon.removeClass("fa-eye-slash").addClass("fa-eye");
+                }
+            });
+
+            // Giriş İşlemi
+            $("#btnLogin").click(function () {
+                var userName = $("#txtUserName").val();
+                var password = $("#txtPassword").val();
+
+                if (!userName || !password) {
+                    showResult("Kullanıcı adı ve şifre gereklidir!", "danger");
+                    return;
+                }
+
+                var loginData = {
+                    UserName: userName,
+                    Password: password
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + "/User/SignIn",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(loginData),
+                    success: function (response) {
+                        if (response.status) {
+                            localStorage.setItem("token", response.message);
+                            showResult("Giriş Başarılı! Yönlendiriliyorsunuz...", "success");
+                            setTimeout(function() {
+                                window.location.href = "/Categories";
+                            }, 1000);
+                        } else {
+                            showResult(response.message, "danger");
+                        }
+                    },
+                    error: function () {
+                        showResult("Sunucu bağlantı hatası!", "danger");
+                    }
+                });
+            });
+
+            function showResult(message, type) {
+                $("#divResult")
+                    .fadeIn()
+                    .removeClass()
+                    .addClass("alert alert-" + type + " mt-3 text-center")
+                    .html(message)
+                    .fadeOut(4000);
+            }
+        });
+    </script>
+</body>
+</html>

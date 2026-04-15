@@ -12,8 +12,9 @@
 
     <link href="~/sbadmin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-
     <link href="~/sbadmin/css/sb-admin-2.min.css" rel="stylesheet">
+
+    @RenderSection("Styles", false)
 </head>
 
 <body id="page-top">
@@ -40,10 +41,24 @@
 
             <hr class="sidebar-divider">
 
-            <li class="nav-item">
-                <a class="nav-link" asp-controller="Home" asp-action="Categories">
+            <li class="nav-item" id="menuCategories">
+                <a class="nav-link" href="/Categories">
                     <i class="fas fa-fw fa-folder"></i>
                     <span>Kategoriler</span>
+                </a>
+            </li>
+
+            <li class="nav-item" id="menuSurveys">
+                <a class="nav-link" href="/Surveys">
+                    <i class="fas fa-fw fa-list-alt"></i>
+                    <span>Anket Yönetimi</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="/Profile">
+                    <i class="fas fa-fw fa-user"></i>
+                    <span>Profilim</span>
                 </a>
             </li>
 
@@ -54,8 +69,8 @@
             </div>
 
         </ul>
-        <div id="content-wrapper" class="d-flex flex-column">
 
+        <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
 
                 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
@@ -69,39 +84,139 @@
 
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Yönetici</span>
-                                <img class="img-profile rounded-circle" src="~/sbadmin/img/undraw_profile.svg">
+                                <span id="userBadge" class="badge p-1 mr-2 text-white" style="font-size: 11px;">Yükleniyor...</span>
+                                <span id="userNameSpan" class="mr-2 d-none d-lg-inline text-gray-800 font-weight-bold small">...</span>
+                                <img class="img-profile rounded-circle shadow-sm" src="~/sbadmin/img/undraw_profile.svg" id="topProfileImage" style="width: 32px; height: 32px; object-fit: cover;">
                             </a>
+
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="/Profile">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i> Profilim
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i> Güvenli Çıkış
+                                </a>
+                            </div>
                         </li>
                     </ul>
 
                 </nav>
+
                 <div class="container-fluid">
-
                     @RenderBody()
-
                 </div>
+
             </div>
+
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Anket Portalı 2026</span>
+                        <span>Copyright &copy; Anket Portalı @DateTime.Now.Year</span>
                     </div>
                 </div>
             </footer>
         </div>
     </div>
+
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Çıkış Yapmak Üzeresiniz!</h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Oturumunuzu sonlandırıp giriş sayfasına yönlendirileceksiniz. Onaylıyor musunuz?</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">İptal</button>
+                    <a class="btn btn-danger text-white" id="btnLogoutAction">Oturumu Kapat</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/sbadmin/vendor/jquery/jquery.min.js"></script>
     <script src="~/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
     <script src="~/sbadmin/vendor/jquery-easing/jquery.easing.min.js"></script>
-
     <script src="~/sbadmin/js/sb-admin-2.min.js"></script>
+
+    <script>
+        function parseJwt(token) {
+            try {
+                var base64Url = token.split('.')[1];
+                var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) { return null; }
+        }
+
+        function toTitleCase(str) {
+            if(!str) return "";
+            return str.split(' ').map(function(word) {
+                return word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR');
+            }).join(' ');
+        }
+
+        $(document).ready(function () {
+            var token = localStorage.getItem("token");
+            var apiBaseUrl = "https://localhost:7258/api"; 
+
+            var path = window.location.pathname.toLowerCase();
+            if (!token && path !== "/login" && path !== "/register" && path !== "/forgotpassword") {
+                window.location.href = "/Login";
+                return;
+            }
+
+            if (token) {
+                var payload = parseJwt(token);
+                if (payload) {
+                    var rawName = payload["FullName"] || payload["unique_name"] || payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Kullanıcı";
+                    $("#userNameSpan").text(toTitleCase(rawName));
+
+
+                    var roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+                    var badge = $("#userBadge");
+                    badge.removeClass("badge-success badge-primary");
+
+                    if (roles && (roles === "Admin" || roles.includes("Admin"))) {
+                        badge.addClass("badge-success").text("Sistem Yöneticisi");
+                    } else {
+                        badge.addClass("badge-primary").text("Portal Üyesi");
+                    }
+
+                    var userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["nameid"] || payload["sub"] || payload["Id"];
+                    if (userId) {
+                        $.ajax({
+                            url: apiBaseUrl + "/User/GetById/" + userId,
+                            type: "GET",
+                            headers: { "Authorization": "Bearer " + token },
+                            success: function (data) {
+                                var photo = data.photoUrl || data.PhotoUrl;
+                                if (photo) {
+                                    var imgPath = apiBaseUrl.replace("/api", "") + "/Files/UserPhotos/" + photo;
+                                    $("#topProfileImage").attr("src", imgPath);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
+            $("#btnLogoutAction").click(function () {
+                localStorage.removeItem("token");
+                window.location.href = "/Login";
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>

@@ -1,90 +1,252 @@
 ﻿@{
-    ViewData["Title"] = "Kategori Anketleri";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Anket Yönetimi";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800" id="categoryTitle">Yükleniyor...</h1>
+<div class="row">
+    <div class="col-md-8" id="listDiv">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-primary d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-white"><i class="fas fa-poll mr-2"></i>Sistemdeki Anketler</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="tbSurveyList" width="100%" cellspacing="0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="width: 60px;">Görsel</th>
+                                <th>Anket Başlığı</th>
+                                <th>Kategori</th>
+                                <th>Durum</th>
+                                <th style="width: 180px;">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <a asp-controller="Home" asp-action="Categories" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
-        <i class="fas fa-arrow-left fa-sm text-white-50"></i> Kategorilere Dön
-    </a>
-</div>
+    <div class="col-md-4" id="formDiv">
+        <div class="card shadow mb-4 border-left-primary">
+            <div class="card-header py-3 bg-white">
+                <h6 class="m-0 font-weight-bold text-primary" id="formTitle">Yeni Anket Oluştur</h6>
+            </div>
+            <div class="card-body">
+                <form id="frmSurvey">
+                    <input type="hidden" id="txtId" />
 
-<div class="row" id="surveyList">
-    <div class="col-12 text-center mt-5" id="loader">
-        <div class="spinner-border text-info" role="status"></div>
-        <p class="mt-2">Bu kategoriye ait anketler getiriliyor...</p>
+                    <div class="text-center mb-3">
+                        <img src="~/sbadmin/img/undraw_posting_photo.svg" id="surveyPicture" class="img-fluid rounded shadow-sm mb-2" style="height: 120px; object-fit: cover; width: 100%;">
+                        <input id="fileInput" type="file" accept="image/*" style="display: none;">
+                        <button type="button" class="btn btn-outline-primary btn-sm btn-block" onclick="$('#fileInput').click();">
+                            <i class="fas fa-camera mr-1"></i> Kapak Görseli Seç
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Anket Başlığı</label>
+                        <input type="text" class="form-control" id="txtTitle" placeholder="Örn: 2026 Müşteri Memnuniyeti">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Kategori Seçin</label>
+                        <select class="form-control" id="cbCategory">
+                            <option value="">Seçiniz...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox small">
+                            <input type="checkbox" class="custom-control-input" id="cbIsActive" checked>
+                            <label class="custom-control-label" for="cbIsActive">Anket Yayında mı?</label>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <button type="button" class="btn btn-primary btn-block shadow-sm font-weight-bold" id="btnSave">
+                        <i class="fa fa-save mr-1"></i> Kaydet
+                    </button>
+
+                    <div id="editButtons" style="display:none;">
+                        <button type="button" class="btn btn-warning btn-block shadow-sm font-weight-bold" id="btnUpdate">
+                            <i class="fa fa-edit mr-1"></i> Güncelle
+                        </button>
+                        <button type="button" class="btn btn-danger btn-block shadow-sm font-weight-bold" id="btnDelete">
+                            <i class="fa fa-trash mr-1"></i> Sil
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-block shadow-sm font-weight-bold" id="btnCancel">
+                            <i class="fa fa-times mr-1"></i> Vazgeç
+                        </button>
+                    </div>
+                </form>
+                <div id="divResult" class="mt-3" style="display:none;"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+            var selectedImageBase64 = "";
 
-            var ApiBaseUrl = "https://localhost:7258/"; 
-            var catId = "@ViewBag.CatId";
+            if (!token) { window.location.href = "/Login"; return; }
 
-            $.ajax({
-                url: ApiBaseUrl + "api/Category/GetById/" + catId, 
-                method: "GET",
-                success: function (data) {
-                    var name = data.name || data.Name;
-                    $("#categoryTitle").text(name + " Listesi");
-                }
-            });
+            GetCategoriesForDropdown();
+            GetSurveyList();
 
-            $.ajax({
-                url: ApiBaseUrl + "api/Survey/List", 
-                method: "GET",
-                success: function (data) {
-                    $("#loader").hide();
-                    var htmlTemplate = "";
-
-                    $.each(data, function (index, item) {
-
-                        var itemCatId = item.categoryId || item.CategoryId;
-                        var itemTitle = item.title || item.Title;
-
-                        if (itemCatId == catId) {
-                            htmlTemplate += `
-                                <div class="col-xl-6 col-md-6 mb-4">
-                                    <div class="card border-left-info shadow h-100 py-2">
-                                        <div class="card-body">
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col mr-2">
-                                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Anket Formu</div>
-                                                    <div class="h5 mb-0 font-weight-bold text-gray-800">${itemTitle}</div>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="card-footer bg-white border-0 text-center">
-                                            <a href="#" class="btn btn-info btn-sm btn-icon-split mb-1">
-                                                <span class="icon text-white-50"><i class="fas fa-eye"></i></span>
-                                                <span class="text">Soruları Gör</span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-
-                    if(htmlTemplate === "") {
-                        htmlTemplate = '<div class="col-12"><div class="alert alert-info shadow-sm"><i class="fas fa-info-circle"></i> Bu kategoriye ait henüz bir anket oluşturulmamış.</div></div>';
+            function GetCategoriesForDropdown() {
+                $.ajax({
+                    url: apiBaseUrl + "/Category",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (data) {
+                        $("#cbCategory").empty().append('<option value="">Seçiniz...</option>');
+                        $.each(data, function (i, item) {
+                            if (item.isActive) {
+                                $("#cbCategory").append('<option value="' + item.id + '">' + toTitleCase(item.name) + '</option>');
+                            }
+                        });
                     }
+                });
+            }
 
-                    $("#surveyList").html(htmlTemplate); 
-                },
-                error: function () {
-                    $("#loader").hide();
-                    $("#surveyList").html('<div class="col-12 text-center text-danger"><b>Hata:</b> Anketler çekilemedi. API adresini veya bağlantısını kontrol edin.</div>');
+            function GetSurveyList() {
+                $.ajax({
+                    url: apiBaseUrl + "/Survey",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (data) {
+                        var payload = parseJwt(token);
+                        var currentUserId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || payload["nameid"] || payload["Id"];
+                        var roles = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+                        var isAdmin = roles && (roles === "Admin" || roles.includes("Admin"));
+
+                        var row = "";
+                        $("#tbSurveyList tbody").empty();
+
+                        $.each(data, function (i, item) {
+                            var statusBadge = item.isActive ? '<span class="badge badge-success">Yayında</span>' : '<span class="badge badge-danger">Kapalı</span>';
+                            var catName = item.category ? toTitleCase(item.category.name) : "Kategori Yok";
+                            var imgUrl = item.photoUrl ? (apiBaseUrl.replace("/api", "") + "/Files/Surveys/" + item.photoUrl) : "/sbadmin/img/undraw_posting_photo.svg";
+
+                            row += "<tr>";
+                            row += '<td><img src="' + imgUrl + '" class="rounded shadow-sm" style="width: 50px; height: 50px; object-fit: cover;"></td>';
+                            row += '<td class="font-weight-bold text-dark">' + toTitleCase(item.name) + '</td>';
+                            row += "<td>" + catName + "</td>";
+                            row += "<td>" + statusBadge + "</td>";
+
+                            row += '<td>';
+
+                            var ownerId = item.appUserId || item.userId;
+                            var isMySurvey = (ownerId === currentUserId);
+
+                            if (isAdmin || isMySurvey) {
+                                row += '<button class="btn btn-info btn-sm btnEdit mr-1" data-id="' + item.id + '" title="Düzenle"><i class="fa fa-edit"></i></button>';
+                                row += '<a href="/Home/Questions/' + item.id + '" class="btn btn-primary btn-sm shadow-sm"><i class="fa fa-list mr-1"></i>Sorular</a>';
+                            } else {
+                                row += '<a href="/Home/TakeSurvey/' + item.id + '" class="btn btn-success btn-sm shadow-sm"><i class="fa fa-pen mr-1"></i>Katıl</a>';
+                            }
+
+                            row += '</td>';
+                            row += "</tr>";
+                        });
+                        $("#tbSurveyList tbody").append(row);
+                    }
+                });
+            }
+
+            $("#fileInput").change(function () {
+                var file = this.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#surveyPicture').attr('src', e.target.result);
+                        selectedImageBase64 = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
                 }
             });
 
+            $("#btnSave").click(function () {
+                var title = $("#txtTitle").val();
+                var catId = $("#cbCategory").val();
+
+                if (!title || !catId) { showResult("Başlık ve Kategori zorunludur!", "danger"); return; }
+
+                var surveyData = {
+                    name: title,
+                    categoryId: catId,
+                    isActive: $("#cbIsActive").is(":checked"),
+                    photoData: selectedImageBase64 !== "" ? selectedImageBase64 : null
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + "/Survey",
+                    type: "POST",
+                    contentType: "application/json",
+                    headers: { "Authorization": "Bearer " + token },
+                    data: JSON.stringify(surveyData),
+                    success: function (d) {
+                        if (d.status) {
+                            showResult("Anket başarıyla oluşturuldu!", "success");
+                            ResetForm();
+                            GetSurveyList();
+                        } else {
+                            showResult(d.message, "danger");
+                        }
+                    }
+                });
+            });
+
+            $(document).on("click", ".btnEdit", function () {
+                var id = $(this).data("id");
+                $.ajax({
+                    url: apiBaseUrl + "/Survey/" + id,
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        $("#txtId").val(d.id);
+                        $("#txtTitle").val(d.name);
+                        $("#cbCategory").val(d.categoryId);
+                        $("#cbIsActive").prop("checked", d.isActive);
+
+                        if(d.photoUrl) {
+                            $('#surveyPicture').attr('src', apiBaseUrl.replace("/api", "") + "/Files/Surveys/" + d.photoUrl);
+                        } else {
+                            $('#surveyPicture').attr('src', '/sbadmin/img/undraw_posting_photo.svg');
+                        }
+
+                        $("#btnSave").hide();
+                        $("#editButtons").show();
+                        $("#formTitle").text("Anketi Düzenle");
+                    }
+                });
+            });
+
+            function ResetForm() {
+                $("#frmSurvey")[0].reset();
+                $('#surveyPicture').attr('src', '/sbadmin/img/undraw_posting_photo.svg');
+                selectedImageBase64 = "";
+                $("#btnSave").show();
+                $("#editButtons").hide();
+                $("#formTitle").text("Yeni Anket Oluştur");
+            }
+
+            $("#btnCancel").click(function () { ResetForm(); });
+
+            function showResult(message, type) {
+                $("#divResult").fadeIn().removeClass().addClass("alert alert-" + type).html(message).fadeOut(5000);
+            }
+
+            function toTitleCase(str) {
+                if(!str) return "";
+                return str.split(' ').map(function(word) { return word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR'); }).join(' ');
+            }
         });
     </script>
 }

@@ -1,55 +1,69 @@
 ﻿@{
 	ViewData["Title"] = "Anket Kategorileri";
-	Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-	<h1 class="h3 mb-0 text-gray-800">Anket Kategorileri Yönetimi</h1>
-	<button class="d-none d-sm-inline-block btn btn-primary shadow-sm" id="btnYeniEkle" data-toggle="modal" data-target="#kategoriModal">
-		<i class="fas fa-plus text-white-50"></i> Yeni Kategori Ekle
-	</button>
-</div>
-
-<div class="row" id="categoryCards">
-	<div class="col-12 text-center mt-5" id="loader">
-		<div class="spinner-border text-primary" role="status"></div>
-		<p class="mt-2 font-weight-bold text-gray-600">Veriler Yükleniyor...</p>
+<div class="row">
+	<div class="col-md-8" id="listArea">
+		<div class="card shadow mb-4">
+			<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-primary text-white">
+				<h6 class="m-0 font-weight-bold"><i class="fas fa-list mr-2"></i>Anket Kategorileri</h6>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-bordered table-hover" id="tbCategoryList" width="100%" cellspacing="0">
+						<thead>
+							<tr class="bg-light text-dark">
+								<th>Kategori Adı</th>
+								<th>Anket Sayısı</th>
+								<th>Durumu</th>
+								<th id="thActions" style="width: 100px;">İşlemler</th>
+							</tr>
+						</thead>
+						<tbody>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
 	</div>
-</div>
 
-<div class="modal fade" id="kategoriModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
-	<div class="modal-dialog modal-dialog-centered" role="document">
-		<div class="modal-content border-0 shadow-lg">
-			<div class="modal-header bg-primary text-white">
-				<h5 class="modal-title" id="divTitle">Yeni Kategori Ekle</h5>
-				<button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
+	<div class="col-md-4" id="formArea">
+		<div class="card shadow mb-4 border-left-primary">
+			<div class="card-header py-3 bg-white text-primary">
+				<h6 class="m-0 font-weight-bold" id="formTitle">Yeni Kategori Ekle</h6>
 			</div>
-			<div class="modal-body p-4">
-				<input type="hidden" id="txtId" />
+			<div class="card-body">
+				<form id="frmCategory">
+					<input type="hidden" id="txtId" />
+					<div class="form-group">
+						<label class="font-weight-bold text-dark small">Kategori Adı</label>
+						<input type="text" class="form-control" id="txtName" placeholder="Örn: Yazılım Eğitimleri">
+					</div>
+					<div class="form-group">
+						<div class="custom-control custom-checkbox small">
+							<input type="checkbox" class="custom-control-input" id="cbIsActive" checked>
+							<label class="custom-control-label" for="cbIsActive">Kategori Aktif mi?</label>
+						</div>
+					</div>
 
-				<div class="form-group">
-					<label class="font-weight-bold text-gray-800">Kategori Adı</label>
-					<input type="text" class="form-control form-control-solid" id="txtName" placeholder="Örn: Eğitim Anketleri" />
-				</div>
-
-				<div class="form-group mt-3">
-					<label class="font-weight-bold text-gray-800">Kategori Açıklaması</label>
-					<textarea class="form-control form-control-solid" id="txtDescription" rows="2" placeholder="Kategori hakkında bilgi giriniz..."></textarea>
-				</div>
-
-				<div class="custom-control custom-switch mt-3">
-					<input type="checkbox" class="custom-control-input" id="cbIsActive" checked>
-					<label class="custom-control-label font-weight-bold text-gray-800" for="cbIsActive">Kategori Aktif mi?</label>
-				</div>
-
-				<div class="alert mt-3" id="divResult" style="display:none;"></div>
-			</div>
-			<div class="modal-footer bg-light">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times"></i> İptal</button>
-				<button type="button" class="btn btn-primary" id="btnSave"><i class="fas fa-save"></i> Kaydet</button>
-				<button type="button" class="btn btn-warning text-white" id="btnEdit" style="display:none;"><i class="fas fa-edit"></i> Güncelle</button>
+					<div class="mt-4">
+						<button type="button" class="btn btn-primary btn-block shadow-sm font-weight-bold" id="btnSave">
+							<i class="fa fa-save mr-1"></i> Kaydet
+						</button>
+						<div id="editButtons" style="display:none;">
+							<button type="button" class="btn btn-warning btn-block shadow-sm font-weight-bold" id="btnUpdate">
+								<i class="fa fa-edit mr-1"></i> Güncelle
+							</button>
+							<button type="button" class="btn btn-danger btn-block shadow-sm font-weight-bold" id="btnDelete">
+								<i class="fa fa-trash mr-1"></i> Sil
+							</button>
+							<button type="button" class="btn btn-secondary btn-block shadow-sm" id="btnCancel">
+								<i class="fa fa-times mr-1"></i> Vazgeç
+							</button>
+						</div>
+					</div>
+				</form>
+				<div id="divResult" class="mt-3" style="display:none;"></div>
 			</div>
 		</div>
 	</div>
@@ -58,193 +72,186 @@
 @section Scripts {
 	<script>
 		$(document).ready(function () {
-			var apiBaseUrl = "https://localhost:7258/"; 
+			var apiBaseUrl = "@ViewBag.ApiBaseURL";
+			var token = localStorage.getItem("token");
 
-			function KategoriListele() {
-				$("#loader").show();
+			if (!token) { window.location.href = "/Login"; return; }
+
+			var payload = parseJwt(token);
+			var roles = payload ? payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] : null;
+			var isAdmin = roles && (roles === "Admin" || roles.includes("Admin"));
+
+
+			if (!isAdmin) {
+				$("#formArea").remove();
+				$("#listArea").removeClass("col-md-8").addClass("col-md-12");
+				$("#thActions").hide(); 
+			}
+
+			GetCategoryList();
+
+
+			function GetCategoryList() {
 				$.ajax({
-					url: apiBaseUrl + "api/Category/List", 
+					url: apiBaseUrl + "/Category/List",
 					type: "GET",
+					headers: { "Authorization": "Bearer " + token },
 					success: function (data) {
-						$("#loader").hide();
-						KartlariOlustur(data);
-					},
-					error: function () {
-						$("#loader").hide();
-						$("#categoryCards").html('<div class="alert alert-danger w-100 text-center">API Bağlantı Hatası! Motor çalışmıyor veya adres yanlış.</div>');
+						var row = "";
+						$("#tbCategoryList tbody").empty();
+
+						$.each(data, function (i, item) {
+							var statusBadge = item.isActive ?
+								'<span class="badge badge-success">Aktif</span>' :
+								'<span class="badge badge-danger">Pasif</span>';
+
+							row += "<tr>";
+							row += "<td class='text-dark'>" + toTitleCase(item.name) + "</td>";
+							row += "<td>" + (item.surveyCount || 0) + " Anket</td>";
+							row += "<td>" + statusBadge + "</td>";
+
+
+							if (isAdmin) {
+								row += '<td><button class="btn btn-info btn-sm btnEdit" data-id="' + item.id + '"><i class="fa fa-edit"></i> Seç</button></td>';
+							}
+							row += "</tr>";
+						});
+						$("#tbCategoryList tbody").append(row);
 					}
 				});
 			}
 
-			function KartlariOlustur(data) {
-				$("#categoryCards").empty();
-				var html = "";
 
-				$.each(data, function (index, item) {
-					var isActive = item.isActive !== undefined ? item.isActive : item.IsActive;
-					var name = item.name || item.Name;
-					var id = item.id || item.Id;
 
-					var durumBadge = isActive === true ? '<span class="badge badge-success px-2 py-1">Aktif</span>' : '<span class="badge badge-danger px-2 py-1">Pasif</span>';
-					html += `
-						<div class="col-xl-4 col-md-6 mb-4">
-							<div class="card border-left-primary shadow h-100 py-2">
-								<div class="card-body">
-									<div class="row no-gutters align-items-center">
-										<div class="col mr-2">
-											<div class="text-xs font-weight-bold text-primary mb-1">DURUM: ${durumBadge}</div>
-											<div class="h5 mb-0 font-weight-bold text-gray-800">${name}</div>
-										</div>
-										<div class="col-auto"><i class="fas fa-folder fa-2x text-gray-300"></i></div>
-									</div>
-								</div>
-								<div class="card-footer bg-white border-0 text-center pt-0">
-									<hr class="mt-0 mb-2">
-									<a href="/Survey/Index/${id}" class="btn btn-info btn-sm" title="Bu Kategorinin Anketlerini Gör">
-										<i class="fas fa-list"></i>
-									</a>
-									<button class="btn btn-warning btn-sm btnDuzenleModal" data-id="${id}" title="Düzenle"><i class="fas fa-edit"></i></button>
-									<button class="btn btn-danger btn-sm btnSil" data-id="${id}" title="Sil"><i class="fas fa-trash"></i></button>
-								</div>
-							</div>
-						</div>`;
-				});
-				$("#categoryCards").html(html);
-			}
+			$("#btnSave").click(function () {
+				var name = $("#txtName").val();
+				if (!name) { showResult("Lütfen kategori adı giriniz!", "danger"); return; }
 
-			KategoriListele();
-
-			$(document).on("click", "#btnYeniEkle", function(){
-				$("#divTitle").html("Yeni Kategori Ekle");
-				$("#txtId").val("0");
-				$("#txtName").val("");
-				$("#txtDescription").val("");
-				$("#cbIsActive").prop("checked", true);
-
-				$("#btnSave").show();
-				$("#btnEdit").hide();
-				$("#divResult").hide();
-			});
-
-			$(document).on("click", "#btnSave", function(){
-				var kategoriAdi = $("#txtName").val().trim();
-				var aciklama = $("#txtDescription").val().trim();
-
-				if(kategoriAdi === ""){
-					$("#divResult").show().removeClass().addClass("alert alert-danger").html("Kategori Adı Boş Olamaz!").fadeOut(5000);
-					return false;
-				}
-				if(aciklama === "") aciklama = "-";
-
-				var category = {
-					id: 0,
-					name: kategoriAdi,
-					description: aciklama,
-					isActive: $("#cbIsActive").prop("checked") ? true : false
-				};
+				var category = { name: name, isActive: $("#cbIsActive").is(":checked") };
 
 				$.ajax({
-					url: apiBaseUrl + "api/Category/Add", 
+					url: apiBaseUrl + "/Category/Add",
 					type: "POST",
 					contentType: "application/json",
+					headers: { "Authorization": "Bearer " + token },
 					data: JSON.stringify(category),
 					success: function (d) {
-						if (d.status){
-							$("#divResult").show().removeClass().addClass("alert alert-success").html(d.message).fadeOut(5000);
-							KategoriListele();
-							setTimeout(function() { $('#kategoriModal').modal('hide'); }, 1500);
+						if (d.status) {
+							showResult(d.message || "Kategori eklendi!", "success");
+							ResetForm();
+							GetCategoryList();
 						} else {
-							$("#divResult").show().removeClass().addClass("alert alert-danger").html(d.message).fadeOut(5000);
+							showResult(d.message, "danger");
 						}
-					},
-					error: function (xhr) {
-						alert("API REDDETTİ! Sebebi:\n" + xhr.responseText);
-						$("#divResult").show().removeClass().addClass("alert alert-danger").html("Kayıt Başarısız. Ekrana çıkan uyarıyı okuyun.").fadeOut(8000);
 					}
 				});
 			});
 
-			$(document).on("click", ".btnDuzenleModal", function(){
-				var id = $(this).attr("data-id");
 
+
+			$(document).on("click", ".btnEdit", function () {
+				var id = $(this).data("id");
 				$.ajax({
-					url: apiBaseUrl + "api/Category/GetById/" + id, 
+					url: apiBaseUrl + "/Category/GetById/" + id,
 					type: "GET",
+					headers: { "Authorization": "Bearer " + token },
 					success: function (d) {
-						$("#divTitle").html("Kategori Düzenle");
 						$("#txtId").val(d.id || d.Id);
 						$("#txtName").val(d.name || d.Name);
-						$("#txtDescription").val(d.description || d.Description || "");
-
-						var aktifMi = d.isActive !== undefined ? d.isActive : d.IsActive;
-						$("#cbIsActive").prop("checked", aktifMi === true);
+						var activeState = d.isActive !== undefined ? d.isActive : d.IsActive;
+						$("#cbIsActive").prop("checked", activeState);
 
 						$("#btnSave").hide();
-						$("#btnEdit").show();
-						$("#divResult").hide();
-
-						$('#kategoriModal').modal('show');
+						$("#editButtons").show();
+						$("#formTitle").text("Kategoriyi Düzenle");
 					}
 				});
 			});
 
-			$(document).on("click", "#btnEdit", function(){
-				var kategoriAdi = $("#txtName").val().trim();
-				var aciklama = $("#txtDescription").val().trim();
-				var idDegeri = parseInt($("#txtId").val()) || 0;
 
-				if(kategoriAdi === ""){
-					$("#divResult").show().removeClass().addClass("alert alert-danger").html("Kategori Adı Boş Olamaz!").fadeOut(5000);
-					return false;
-				}
-				if(aciklama === "") aciklama = "-";
+
+			$("#btnUpdate").click(function () {
+				var rawId = $("#txtId").val();
+				var name = $("#txtName").val();
+
+				if (!rawId) { showResult("Önce bir kategori seçin!", "danger"); return; }
 
 				var category = {
-					id: idDegeri,
-					name: kategoriAdi,
-					description: aciklama,
-					isActive: $("#cbIsActive").prop("checked") ? true : false
+					id: parseInt(rawId),
+					name: name,
+					description: " ",
+					isActive: $("#cbIsActive").is(":checked")
 				};
 
 				$.ajax({
-					url: apiBaseUrl + "api/Category/Update", 
+					url: apiBaseUrl + "/Category/Update",
 					type: "PUT",
 					contentType: "application/json",
+					headers: { "Authorization": "Bearer " + token },
 					data: JSON.stringify(category),
 					success: function (d) {
-						if (d.status){
-							$("#divResult").show().removeClass().addClass("alert alert-success").html(d.message).fadeOut(5000);
-							KategoriListele();
-							setTimeout(function() { $('#kategoriModal').modal('hide'); }, 1500);
+						if (d.status) {
+							showResult(d.message || "Güncellendi!", "success");
+							ResetForm();
+							GetCategoryList();
 						} else {
-							$("#divResult").show().removeClass().addClass("alert alert-danger").html(d.message).fadeOut(5000);
+							showResult(d.message, "danger");
 						}
-					},
-					error: function (xhr) {
-						alert("API REDDETTİ! Sebebi:\n" + xhr.responseText);
-						$("#divResult").show().removeClass().addClass("alert alert-danger").html("Güncelleme Başarısız. Ekrana çıkan uyarıyı okuyun.").fadeOut(8000);
 					}
 				});
 			});
 
-			$(document).on("click", ".btnSil", function(){
-				var id = $(this).attr("data-id");
 
-				if(confirm("Bu kategoriyi silmek istediğinize emin misiniz?")) {
+
+			$("#btnDelete").click(function () {
+				var id = parseInt($("#txtId").val());
+				if (!id) { showResult("Önce bir kategori seçin!", "danger"); return; }
+
+				if(confirm("Silmek istediğinize emin misiniz?")) {
 					$.ajax({
-						url: apiBaseUrl + "api/Category/Delete/" + id, 
+						url: apiBaseUrl + "/Category/Delete/" + id,
 						type: "DELETE",
+						headers: { "Authorization": "Bearer " + token },
 						success: function (d) {
-							if (d.status){
-								alert(d.message);
-								KategoriListele();
+							if (d.status) {
+								showResult(d.message || "Silindi!", "success");
+								ResetForm();
+								GetCategoryList();
 							} else {
-								alert(d.message);
+								showResult(d.message, "danger");
 							}
 						}
 					});
 				}
 			});
+
+
+			function ResetForm() {
+				$("#frmCategory")[0].reset();
+				$("#txtId").val("");
+				$("#btnSave").show();
+				$("#editButtons").hide();
+				$("#formTitle").text("Yeni Kategori Ekle");
+			}
+
+			$("#btnCancel").click(function () { ResetForm(); });
+
+			function showResult(message, type) {
+				$("#divResult").stop(true, true).hide()
+					.removeClass().addClass("alert alert-" + type)
+					.html(message).fadeIn(500);
+
+				setTimeout(function() {
+					$("#divResult").fadeOut(1000);
+				}, 4000);
+			}
+
+			function toTitleCase(str) {
+				if(!str) return "";
+				return str.split(' ').map(function(word) {
+					return word.charAt(0).toLocaleUpperCase('tr-TR') + word.slice(1).toLocaleLowerCase('tr-TR');
+				}).join(' ');
+			}
 		});
 	</script>
 }
